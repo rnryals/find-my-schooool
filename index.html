@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find my school - 프리미엄 고등학교 맞춤 탐색</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0B0F19',
+                            card: 'rgba(23, 31, 50, 0.7)',
+                            accent: '#6366F1',
+                            neonBlue: '#38BDF8',
+                            neonPurple: '#A855F7',
+                            gold: '#F59E0B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons & Pretendard Font -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: rgba(18, 26, 43, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-input {
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #F9FAFB;
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #6366F1;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+            outline: none;
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(23, 31, 50, 0.8) 0%, rgba(15, 22, 38, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1F2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="resetAll()">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
+                        Find my <span class="bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">school</span>
+                    </span>
+                    <span class="text-[10px] uppercase tracking-widest text-indigo-300 font-semibold block -mt-1">Smart High School Finder</span>
+                </div>
+            </div>
+
+            <!-- Favorite Badge Button -->
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleFavoritesModal()" class="px-4 py-2.5 rounded-xl glass-input hover:border-indigo-500/50 text-slate-200 text-xs font-semibold transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-bookmark text-amber-400"></i>
+                    <span>관심 학교</span>
+                    <span id="favCountBadge" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[11px] px-2 py-0.5 rounded-full font-bold">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10">
+        
+        <!-- Hero Title Section -->
+        <div class="text-center mb-12 relative">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-4 backdrop-blur-md">
+                <i class="fa-solid fa-sparkles text-sky-400"></i>
+                <span>학생 맞춤형 고등학교 추천 알고리즘</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                나만의 고등학교를 <span class="bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent glow-text">탐색해보세요</span>
+            </h1>
+            <p class="mt-3 text-slate-400 text-sm sm:text-base max-w-xl mx-auto font-normal leading-relaxed">
+                거주하는 동·구 위치, 남고/여고/공학 희망 여부, 내신 수준 및 목표 대학을 입력하면 당신에게 딱 맞는 최적의 고등학교를 추천해 드립니다.
+            </p>
+        </div>
+
+        <!-- Filter Form Section -->
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-12 relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <form id="recommendationForm" onsubmit="handleFormSubmit(event)" class="space-y-6 relative z-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    
+                    <!-- 1. Location -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-location-dot text-sky-400 mr-2"></i> 거주 지역 (구 / 동)
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="guSelect" onchange="updateDongOptions()" class="glass-input w-full px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium focus:ring-0">
+                                <option value="" class="bg-slate-900 text-slate-300">구 선택</option>
+                            </select>
+                            <select id="dongSelect" class="glass-input w-full px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium focus:ring-0">
+                                <option value="" class="bg-slate-900 text-slate-300">동 선택</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Gender Preference -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-users text-purple-400 mr-2"></i> 희망 학교 성별 유형
+                        </label>
+                        <select id="genderType" class="glass-input w-full px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium focus:ring-0">
+                            <option value="all" class="bg-slate-900 text-slate-300">전체 (상관없음)</option>
+                            <option value="남고" class="bg-slate-900 text-slate-300">남자고등학교 (남고)</option>
+                            <option value="여고" class="bg-slate-900 text-slate-300">여자고등학교 (여고)</option>
+                            <option value="남녀공학" class="bg-slate-900 text-slate-300">남녀공학</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. Academic Level -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-chart-simple text-emerald-400 mr-2"></i> 현재 성적 (상위 %)
+                        </label>
+                        <select id="academicLevel" class="glass-input w-full px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium focus:ring-0">
+                            <option value="5" class="bg-slate-900 text-slate-300">최상위권 (상위 5% 이내)</option>
+                            <option value="15" class="bg-slate-900 text-slate-300">상위권 (상위 15% 이내)</option>
+                            <option value="35" class="bg-slate-900 text-slate-300">중상위권 (상위 35% 이내)</option>
+                            <option value="60" class="bg-slate-900 text-slate-300">중위권 (상위 60% 이내)</option>
+                            <option value="100" class="bg-slate-900 text-slate-300">기타 / 일반</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Target University -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-bullseye text-amber-400 mr-2"></i> 목표 대학 / 진로
+                        </label>
+                        <select id="targetUniv" class="glass-input w-full px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium focus:ring-0">
+                            <option value="sky" class="bg-slate-900 text-slate-300">SKY / 의치한약수</option>
+                            <option value="seoul_major" class="bg-slate-900 text-slate-300">주요 인서울 상위권</option>
+                            <option value="in_seoul" class="bg-slate-900 text-slate-300">In 서울 대학 / 국공립</option>
+                            <option value="general" class="bg-slate-900 text-slate-300">균형적인 진학 전략</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2 flex justify-center">
+                    <button type="submit" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/25 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center space-x-2.5 text-sm sm:text-base cursor-pointer">
+                        <i class="fa-solid fa-wand-magic-sparkles text-sky-300"></i>
+                        <span>맞춤 고등학교 결과 확인하기</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result Section Container -->
+        <div id="resultsContainer" class="hidden space-y-6">
+            
+            <!-- Result Bar Header -->
+            <div class="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-indigo-500">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-[#38BDF8] fa-circle-check text-sky-400"></i>
+                        추천 매칭 결과
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5" id="resultSummaryText">
+                        입력 조건에 맞추어 가장 적합도가 높은 학교를 정렬했습니다.
+                    </p>
+                </div>
+                
+                <div class="flex items-center space-x-2 self-end sm:self-center">
+                    <span class="text-xs text-slate-400 font-medium">정렬:</span>
+                    <select id="sortOption" onchange="sortAndRenderResults()" class="glass-input text-xs px-3 py-1.5 rounded-lg border border-white/10 text-slate-200">
+                        <option value="score" class="bg-slate-900">적합도 높은 순</option>
+                        <option value="distance" class="bg-slate-900">거리 (동) 기준</option>
+                        <option value="skyRate" class="bg-slate-900">SKY 진학률 순</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- School Cards List Grid -->
+            <div id="schoolListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards injected here -->
+            </div>
+
+        </div>
+
+        <!-- No Result Message -->
+        <div id="noResults" class="hidden glass-panel p-12 text-center rounded-3xl border border-white/10">
+            <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mx-auto mb-4 text-slate-500 text-2xl">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-200">조건에 맞는 학교를 찾을 수 없습니다.</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                지역을 선택하셨는지 확인해 주시거나 희망 학교 유형(남고/여고/공학)을 '전체'로 변경한 후 다시 조회해 보세요.
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-2xl rounded-3xl overflow-hidden max-h-[90vh] flex flex-col border border-white/15 animate-fade-in shadow-2xl">
+            
+            <!-- Modal Header -->
+            <div class="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-white/10 relative">
+                <button onclick="closeDetailModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white bg-white/5 hover:bg-white/15 w-9 h-9 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <span class="px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-[11px] font-bold tracking-wider uppercase border border-indigo-500/30" id="modalCategory">
+                    일반계 고등학교
+                </span>
+                <h3 class="text-2xl font-black text-white mt-2" id="modalSchoolName">학교명</h3>
+                <p class="text-xs text-slate-400 mt-1 flex items-center" id="modalLocation">
+                    <i class="fa-solid fa-location-dot mr-1.5 text-sky-400"></i> 위치 정보
+                </p>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs sm:text-sm text-slate-300">
+                
+                <!-- Matching Key Stats -->
+                <div class="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-900/60 border border-white/10 text-center">
+                    <div>
+                        <span class="block text-[11px] text-slate-400 font-medium">매칭 적합도</span>
+                        <span class="text-lg font-black bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent" id="modalMatchScore">0%</span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] text-slate-400 font-medium">구분 / 유형</span>
+                        <span class="text-xs font-bold text-slate-200 mt-1 block" id="modalGenderType">남녀공학</span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] text-slate-400 font-medium">SKY/의대 진학률</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-1 block" id="modalSkyRate">0%</span>
+                    </div>
+                </div>
+
+                <!-- Features & Atmosphere -->
+                <div>
+                    <h4 class="font-bold text-white mb-2 flex items-center text-sm">
+                        <i class="fa-solid fa-star text-amber-400 mr-2"></i> 학교 특징 및 분위기
+                    </h4>
+                    <p class="text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-xl border border-white/5" id="modalDescription">
+                        학교 설명...
+                    </p>
+                </div>
+
+                <!-- Strategic Tips -->
+                <div>
+                    <h4 class="font-bold text-white mb-2 flex items-center text-sm">
+                        <i class="fa-solid fa-compass text-indigo-400 mr-2"></i> 추천 이유 및 진학 포인트
+                    </h4>
+                    <ul class="space-y-2 text-slate-300 pl-1" id="modalTips">
+                        <!-- Strategy list -->
+                    </ul>
+                </div>
+
+                <!-- Additional Stats -->
+                <div class="grid grid-cols-2 gap-4 pt-3 border-t border-white/10">
+                    <div>
+                        <span class="text-[11px] font-semibold text-slate-400 block">내신 경쟁도</span>
+                        <span class="font-medium text-slate-200" id="modalCompetition">높음</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-semibold text-slate-400 block">소재 구</span>
+                        <span class="font-medium text-slate-200" id="modalDistrict">강남구</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-950 border-t border-white/10 flex justify-end">
+                <button onclick="closeDetailModal()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition-colors">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites Drawer Modal -->
+    <div id="favoritesModal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden flex flex-col max-h-[80vh] border border-white/15 animate-fade-in shadow-2xl">
+            <div class="p-5 bg-gradient-to-r from-indigo-950 to-slate-900 border-b border-white/10 flex justify-between items-center">
+                <h3 class="font-bold text-white flex items-center text-sm">
+                    <i class="fa-solid fa-bookmark text-amber-400 mr-2"></i> 보관한 관심 학교
+                </h3>
+                <button onclick="toggleFavoritesModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="favListContainer" class="p-4 overflow-y-auto flex-1 space-y-3">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </footer>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark/90 border-t border-white/10 py-8 text-xs text-slate-500 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center space-y-2">
+            <p class="font-bold text-slate-400">Find my school</p>
+            <p>본 사이트의 추천 정보는 실제 고등학교 데이터를 바탕으로 계산된 진학 참고 가이드입니다.</p>
+            <p class="text-slate-600">© Find my school. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        // Data Set
+        const districtData = {
+            "강남구": ["대치동", "역삼동", "개포동", "압구정동", "청담동", "도곡동"],
+            "서초구": ["반포동", "서초동", "방배동", "잠원동"],
+            "송파구": ["잠실동", "방이동", "문정동", "오금동"],
+            "양천구": ["목동", "신정동"],
+            "노원구": ["중계동", "하계동", "상계동"],
+            "분당구": ["정자동", "서현동", "수내동", "백현동"],
+            "수성구": ["범어동", "만촌동"]
+        };
+
+        const schoolsDB = [
+            {
+                id: "s1",
+                name: "휘문고등학교",
+                gu: "강남구",
+                dong: "대치동",
+                gender: "남고",
+                type: "자율형 사립고",
+                skyRate: 28.5,
+                competition: "매우 치열",
+                atmosphere: "대치동의 상징적인 남고. 최상위권 의대 및 주요 대학 정시 진학률이 매우 뛰어남.",
+                tips: ["정시 수능 및 의치약학 계열 목표 남학생에게 최적", "중등 심화 학습이 필수적인 수학/과학 중심 환경"],
+                badge: "의대/정시 최강"
+            },
+            {
+                id: "s2",
+                name: "단국대학교부속고등학교",
+                gu: "강남구",
+                dong: "대치동",
+                gender: "남고",
+                type: "일반계고",
+                skyRate: 22.0,
+                competition: "높음",
+                atmosphere: "대치동 명문 일반고. 수시와 정시 두 마리 토끼를 잡을 수 있는 학습 분위기.",
+                tips: ["수시 교과/학종과 정시 준비를 병행하려는 학생", "이과 계열 상위권에 두터운 선배층 형성"],
+                badge: "대치 명문 일반고"
+            },
+            {
+                id: "s3",
+                name: "진선여자고등학교",
+                gu: "강남구",
+                dong: "역삼동",
+                gender: "여고",
+                type: "일반계고",
+                skyRate: 21.2,
+                competition: "높음",
+                atmosphere: "강남 대표 여고. 서술형 내신 대비 및 섬세한 면학 분위기로 유명.",
+                tips: ["상위권 성적 유지가 능숙하며 서울 주요 대학교 진학을 희망하는 여학생"],
+                badge: "강남 대표 여고"
+            },
+            {
+                id: "s4",
+                name: "세화고등학교",
+                gu: "서초구",
+                dong: "반포동",
+                gender: "남고",
+                type: "자율형 사립고",
+                skyRate: 27.0,
+                competition: "매우 치열",
+                atmosphere: "서초구 최고의 자사고. 우수한 상위권 경쟁 체제 및 정시 입시 노하우 축적.",
+                tips: ["스스로 학습 계획을 세우고 고난도 수능을 노리는 학생"],
+                badge: "서초 명문 자사고"
+            },
+            {
+                id: "s5",
+                name: "세화여자고등학교",
+                gu: "서초구",
+                dong: "반포동",
+                gender: "여고",
+                type: "자율형 사립고",
+                skyRate: 24.5,
+                competition: "매우 치열",
+                atmosphere: "서초/강남권 최선호 여고. 열정적인 교사진과 체계적인 학종 지도.",
+                tips: ["자신의 목표가 명확하고 상위권 대학에 도전하는 여학생"],
+                badge: "여고 명문 자사고"
+            },
+            {
+                id: "s6",
+                name: "서울고등학교",
+                gu: "서초구",
+                dong: "서초동",
+                gender: "남고",
+                type: "일반계고 (과학중점)",
+                skyRate: 17.5,
+                competition: "보통-높음",
+                atmosphere: "과학중점반 운영으로 이공계 지망생에게 우수한 실험 및 스펙 환경 제공.",
+                tips: ["공학 및 자연과학 진학을 희망하는 남학생에게 적극 추천"],
+                badge: "과학중점 명교"
+            },
+            {
+                id: "s7",
+                name: "강서고등학교",
+                gu: "양천구",
+                dong: "목동",
+                gender: "남고",
+                type: "일반계고",
+                skyRate: 23.0,
+                competition: "매우 치열",
+                atmosphere: "목동의 정시 명문 일반고. 막강한 모의고사 성적을 자랑하는 학습 분위기.",
+                tips: ["수능 정시 파이터 남학생에게 최고의 입시 환경"],
+                badge: "목동 정시 최강"
+            },
+            {
+                id: "s8",
+                name: "목동고등학교",
+                gu: "양천구",
+                dong: "목동",
+                gender: "여고",
+                type: "일반계고",
+                skyRate: 18.2,
+                competition: "높음",
+                atmosphere: "양천구 여학생들의 상위권 진학 타깃 1순위. 수시 및 정시 균형.",
+                tips: ["꾸준한 내신 관리를 통한 주요 대학 수시 합격 전략"],
+                badge: "목동 여고 선호 1위"
+            },
+            {
+                id: "s9",
+                name: "영신여자고등학교",
+                gu: "노원구",
+                dong: "중계동",
+                gender: "여고",
+                type: "일반계고",
+                skyRate: 15.8,
+                competition: "높음",
+                atmosphere: "노원 중계 학원가 중심. 상위권 학생들의 치열한 내신 경쟁 및 탄탄한 지원.",
+                tips: ["학원 인프라 활용 및 내신/학종을 철저히 다지는 여학생"],
+                badge: "노원 명문 여고"
+            },
+            {
+                id: "s10",
+                name: "낙생고등학교",
+                gu: "분당구",
+                dong: "판교동",
+                gender: "남녀공학",
+                type: "일반계고",
+                skyRate: 24.0,
+                competition: "매우 치열",
+                atmosphere: "분당/판교 지역 독보적 1위. 압도적인 의대 및 SKY 정시 성과.",
+                tips: ["남녀공학 선호 및 수학/과학 상위권 남녀 학생"],
+                badge: "분당 대표 명문"
+            }
+        ];
+
+        let currentResults = [];
+        let favorites = JSON.parse(localStorage.getItem('fms_favs') || '[]');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initLocationDropdowns();
+            updateFavBadge();
+        });
+
+        function initLocationDropdowns() {
+            const guSelect = document.getElementById('guSelect');
+            guSelect.innerHTML = '<option value="" class="bg-slate-900 text-slate-300">구 선택</option>';
+            
+            Object.keys(districtData).forEach(gu => {
+                const opt = document.createElement('option');
+                opt.value = gu;
+                opt.textContent = gu;
+                opt.className = "bg-slate-900 text-slate-300";
+                guSelect.appendChild(opt);
+            });
+        }
+
+        function updateDongOptions() {
+            const guSelect = document.getElementById('guSelect');
+            const dongSelect = document.getElementById('dongSelect');
+            const selectedGu = guSelect.value;
+
+            dongSelect.innerHTML = '<option value="" class="bg-slate-900 text-slate-300">동 선택 (전체)</option>';
+
+            if (selectedGu && districtData[selectedGu]) {
+                districtData[selectedGu].forEach(dong => {
+                    const opt = document.createElement('option');
+                    opt.value = dong;
+                    opt.textContent = dong;
+                    opt.className = "bg-slate-900 text-slate-300";
+                    dongSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const selectedGu = document.getElementById('guSelect').value;
+            const selectedDong = document.getElementById('dongSelect').value;
+            const genderType = document.getElementById('genderType').value;
+            const academicLevel = parseInt(document.getElementById('academicLevel').value, 10);
+            const targetUniv = document.getElementById('targetUniv').value;
+
+            if (!selectedGu) {
+                alert('지역(구)를 선택해 주세요!');
+                return;
+            }
+
+            let filtered = schoolsDB.filter(school => {
+                if (school.gu !== selectedGu) return false;
+
+                if (genderType !== 'all') {
+                    if (genderType === '남고' && school.gender !== '남고') return false;
+                    if (genderType === '여고' && school.gender !== '여고') return false;
+                    if (genderType === '남녀공학' && school.gender !== '남녀공학') return false;
+                }
+
+                return true;
+            });
+
+            currentResults = filtered.map(school => {
+                let score = 72;
+
+                if (selectedDong && school.dong === selectedDong) {
+                    score += 15;
+                }
+
+                if (academicLevel <= 15) {
+                    if (targetUniv === 'sky' && school.skyRate > 20) score += 12;
+                    else if (school.skyRate > 15) score += 6;
+                } else if (academicLevel >= 35) {
+                    if (school.type === '일반계고') score += 10;
+                }
+
+                score = Math.min(score + Math.floor(Math.random() * 4), 98);
+
+                return {
+                    ...school,
+                    matchScore: score
+                };
+            });
+
+            currentResults.sort((a, b) => b.matchScore - a.matchScore);
+            renderResults(selectedGu, selectedDong);
+        }
+
+        function renderResults(gu, dong) {
+            const container = document.getElementById('resultsContainer');
+            const noResults = document.getElementById('noResults');
+            const grid = document.getElementById('schoolListGrid');
+            const summaryText = document.getElementById('resultSummaryText');
+
+            grid.innerHTML = '';
+
+            if (currentResults.length === 0) {
+                container.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            const locationStr = dong ? `${gu} ${dong}` : gu;
+            summaryText.textContent = `'${locationStr}' 지역 검색 결과 총 ${currentResults.length}개의 학교가 추천되었습니다.`;
+
+            currentResults.forEach(school => {
+                const isFav = favorites.some(f => f.id === school.id);
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-2xl p-5 flex flex-col justify-between animate-fade-in relative group";
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-[11px] font-bold border border-indigo-500/20">
+                                ${school.badge || school.type}
+                            </span>
+                            <button onclick="toggleFavorite('${school.id}')" class="text-slate-500 hover:text-amber-400 transition-colors p-1 text-base">
+                                <i class="${isFav ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark"></i>
+                            </button>
+                        </div>
+
+                        <h3 class="text-lg font-extrabold text-white group-hover:text-sky-300 transition-colors">${school.name}</h3>
+                        <p class="text-xs text-slate-400 mt-1 flex items-center">
+                            <i class="fa-solid fa-location-dot mr-1.5 text-sky-400"></i> ${school.gu} ${school.dong} · ${school.gender}
+                        </p>
+
+                        <p class="text-xs text-slate-300 mt-3.5 leading-relaxed bg-slate-900/50 p-3 rounded-xl border border-white/5 line-clamp-2">
+                            ${school.atmosphere}
+                        </p>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-t border-white/10">
+                        <div class="flex items-center justify-between text-xs mb-3">
+                            <div>
+                                <span class="text-slate-400 text-[11px] block">적합도</span>
+                                <span class="text-sky-400 font-black text-base">${school.matchScore}%</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 text-[11px] block">SKY/의대 진학률</span>
+                                <span class="text-emerald-400 font-bold text-sm">${school.skyRate}%</span>
+                            </div>
+                        </div>
+
+                        <button onclick="openDetailModal('${school.id}')" class="w-full py-2.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 text-xs font-bold border border-indigo-500/30 transition-all flex items-center justify-center space-x-1.5">
+                            <span>상세 진학 전략</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function sortAndRenderResults() {
+            const opt = document.getElementById('sortOption').value;
+
+            if (opt === 'score') {
+                currentResults.sort((a, b) => b.matchScore - a.matchScore);
+            } else if (opt === 'skyRate') {
+                currentResults.sort((a, b) => b.skyRate - a.skyRate);
+            } else if (opt === 'distance') {
+                const selectedDong = document.getElementById('dongSelect').value;
+                currentResults.sort((a, b) => {
+                    if (a.dong === selectedDong && b.dong !== selectedDong) return -1;
+                    if (a.dong !== selectedDong && b.dong === selectedDong) return 1;
+                    return b.matchScore - a.matchScore;
+                });
+            }
+
+            const gu = document.getElementById('guSelect').value;
+            const dong = document.getElementById('dongSelect').value;
+            renderResults(gu, dong);
+        }
+
+        function openDetailModal(schoolId) {
+            const school = schoolsDB.find(s => s.id === schoolId);
+            if (!school) return;
+
+            document.getElementById('modalCategory').textContent = `${school.type} · ${school.gu}`;
+            document.getElementById('modalSchoolName').textContent = school.name;
+            document.getElementById('modalLocation').innerHTML = `<i class="fa-solid fa-location-dot mr-1.5 text-sky-400"></i> 서울특별시 ${school.gu} ${school.dong}`;
+            
+            const matchScore = school.matchScore || 85;
+            document.getElementById('modalMatchScore').textContent = `${matchScore}%`;
+            document.getElementById('modalGenderType').textContent = school.gender;
+            document.getElementById('modalSkyRate').textContent = `${school.skyRate}%`;
+            document.getElementById('modalDescription').textContent = school.atmosphere;
+            document.getElementById('modalCompetition').textContent = school.competition;
+            document.getElementById('modalDistrict').textContent = school.gu;
+
+            const tipsList = document.getElementById('modalTips');
+            tipsList.innerHTML = '';
+            school.tips.forEach(tip => {
+                const li = document.createElement('li');
+                li.className = "flex items-start space-x-2";
+                li.innerHTML = `<i class="fa-solid fa-check text-sky-400 text-xs mt-1"></i><span>${tip}</span>`;
+                tipsList.appendChild(li);
+            });
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function toggleFavorite(schoolId) {
+            const index = favorites.findIndex(f => f.id === schoolId);
+            if (index >= 0) {
+                favorites.splice(index, 1);
+            } else {
+                const school = schoolsDB.find(s => s.id === schoolId);
+                if (school) favorites.push(school);
+            }
+
+            localStorage.setItem('fms_favs', JSON.stringify(favorites));
+            updateFavBadge();
+
+            const gu = document.getElementById('guSelect').value;
+            if (gu) renderResults(gu, document.getElementById('dongSelect').value);
+            renderFavList();
+        }
+
+        function updateFavBadge() {
+            document.getElementById('favCountBadge').textContent = favorites.length;
+        }
+
+        function toggleFavoritesModal() {
+            const modal = document.getElementById('favoritesModal');
+            if (modal.classList.contains('hidden')) {
+                renderFavList();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function renderFavList() {
+            const container = document.getElementById('favListContainer');
+            container.innerHTML = '';
+
+            if (favorites.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-8">보관한 학교가 없습니다.</p>';
+                return;
+            }
+
+            favorites.forEach(school => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-white/10 text-xs";
+                item.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-white">${school.name}</h4>
+                        <p class="text-slate-400 text-[11px] mt-0.5">${school.gu} ${school.dong} · ${school.gender}</p>
+                    </div>
+                    <button onclick="toggleFavorite('${school.id}')" class="text-rose-400 hover:text-rose-300 font-semibold px-2 py-1">
+                        삭제
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function resetAll() {
+            document.getElementById('recommendationForm').reset();
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            initLocationDropdowns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
